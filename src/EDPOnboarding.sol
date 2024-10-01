@@ -25,6 +25,7 @@ contract EDPOnboarding {
     error EDP__InsufficientFunds();
     error EDP__ZeroDistributionAmount(); // New error
     error EDP__TransferFailed();
+    error EDP__NoBalanceToWithdraw(); // New error for withdraw function
 
     constructor() {
         owner = msg.sender;
@@ -88,5 +89,18 @@ contract EDPOnboarding {
     ) public view returns (bool isApproved, bool hasClaimed) {
         User memory user = users[_user];
         return (user.isApproved, user.hasClaimed);
+    }
+
+    // New function to withdraw all ETH balance
+    function withdrawAllBalance() public onlyOwner {
+        uint256 balance = address(this).balance;
+        if (balance == 0) {
+            revert EDP__NoBalanceToWithdraw();
+        }
+
+        (bool success, ) = payable(owner).call{value: balance}("");
+        if (!success) {
+            revert EDP__TransferFailed();
+        }
     }
 }
